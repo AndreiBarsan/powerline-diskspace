@@ -138,9 +138,6 @@ class CustomSegment(Segment):
 
 Diskspace = with_docstring(CustomSegment(), """Return a custom segment.""")
 
-
-# TODO track the themes/tmux/... config in your dotfile repo.
-
 if __name__ == "__main__":
     from pprint import pprint
 
