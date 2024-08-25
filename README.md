@@ -31,7 +31,7 @@ In this case, the relevant part of the powerline config (`cat ~/.config/powerlin
 }
 ```
 
-(Other plug-ins like `uptime`, which are built into `tmux` are not shown%.)
+(Other plug-ins like `uptime`, which are built into `tmux` are not shown.)
 
 ## Getting Started
 

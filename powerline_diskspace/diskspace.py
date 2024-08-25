@@ -2,10 +2,17 @@ import re
 import subprocess
 from datetime import datetime
 from typing import Optional, Mapping
+from functools import lru_cache
 
 from powerline import PowerlineLogger
 from powerline.segments import Segment, with_docstring
 from powerline.theme import requires_segment_info, requires_filesystem_watcher
+
+
+@lru_cache(maxsize=1)
+def is_linux() -> bool:
+    """Returns True if the current OS is Linux."""
+    return "linux" in subprocess.run(["uname", "-s"], stdout=subprocess.PIPE).stdout.decode("utf-8").lower()
 
 
 def get_disk_usage() -> dict:
@@ -13,10 +20,13 @@ def get_disk_usage() -> dict:
     # We use 'df' instead of 'os.statvfs' because we want to get ALL disk usages.
     linux_command = [
         "df",
-        "--local",
-        "--portability",
-        "--print-type",
+        "-l", # list only local systems since network ones may be slow
     ]
+    if is_linux():
+        linux_command += ["--print-type"]
+    else:
+        linux_command += ["-Y"] # thanks Tim Apple
+
     result = subprocess.run(linux_command, stdout=subprocess.PIPE)
     output = result.stdout.decode("utf-8").split("\n")
 
@@ -140,5 +150,6 @@ Diskspace = with_docstring(CustomSegment(), """Return a custom segment.""")
 
 if __name__ == "__main__":
     from pprint import pprint
+    print("Is Linux?", is_linux())
 
     pprint(filter_disk_usage(get_disk_usage(), "/snap|/dev|/run|/boot|/sys/fs"))
