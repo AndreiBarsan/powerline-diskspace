@@ -25,7 +25,10 @@ def get_disk_usage() -> dict:
     if is_linux():
         linux_command += ["--print-type"]
     else:
-        linux_command += ["-Y"] # thanks Tim Apple
+        # thanks Tim Apple
+        linux_command += ["-Y"]
+        linux_command += ["-k"] # use 1024-byte blocks
+        linux_command += ["-I"] # don't show inodes (they are not shown by default on Linux)
 
     result = subprocess.run(linux_command, stdout=subprocess.PIPE)
     output = result.stdout.decode("utf-8").split("\n")
