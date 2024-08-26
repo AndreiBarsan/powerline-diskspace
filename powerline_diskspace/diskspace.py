@@ -1,7 +1,7 @@
 import re
 import subprocess
 from datetime import datetime
-from typing import Optional, Mapping
+from typing import Optional, Mapping, List
 from functools import lru_cache
 
 from powerline import PowerlineLogger
@@ -15,8 +15,11 @@ def is_linux() -> bool:
     return "linux" in subprocess.run(["uname", "-s"], stdout=subprocess.PIPE).stdout.decode("utf-8").lower()
 
 
-def get_disk_usage() -> dict:
-    """Returns disk usage in Linux as a list of dictionaries parsed from the output of 'df'."""
+def get_df_output() -> str:
+    """Runs 'df' and returns the output as a string.
+
+    The tool is sort of compatible with both Linux and macOS but further testing is needed.
+    """
     # We use 'df' instead of 'os.statvfs' because we want to get ALL disk usages.
     linux_command = [
         "df",
@@ -31,7 +34,12 @@ def get_disk_usage() -> dict:
         linux_command += ["-I"] # don't show inodes (they are not shown by default on Linux)
 
     result = subprocess.run(linux_command, stdout=subprocess.PIPE)
-    output = result.stdout.decode("utf-8").split("\n")
+    return result.stdout.decode("utf-8")
+
+
+def get_disk_usage(df_output: str) -> dict:
+    """Returns disk usage in Linux as a list of dictionaries parsed from the output of 'df'."""
+    output = df_output.split("\n")
 
     # Parse the output columns: filesystem, type, 1024-blocks, used, available, capacity, mounted on
     res = []
@@ -55,12 +63,20 @@ def get_disk_usage() -> dict:
     return res
 
 
-def filter_disk_usage(disk_usage: dict, mount_ignore_pattern: str) -> dict:
+def filter_disk_usage(disk_usage: dict, mounts: Optional[List[str]], mount_ignore_pattern: str) -> dict:
     """Filter out disk usage based on the mount_ignore_pattern."""
-    mount_ignore_re = re.compile(mount_ignore_pattern)
-    return [
-        disk for disk in disk_usage if not mount_ignore_re.match(disk["mounted_on"])
-    ]
+    if mounts is None:
+        # Show all, except what's ignored.
+        mount_ignore_re = re.compile(mount_ignore_pattern)
+        return [
+            disk for disk in disk_usage if not mount_ignore_re.match(disk["mounted_on"])
+        ]
+    else:
+        # Show only what the user specified.
+        mounts_set = set(mounts)
+        return [
+            disk for disk in disk_usage if disk["mounted_on"] in mounts_set
+        ]
 
 
 @requires_filesystem_watcher
@@ -83,6 +99,7 @@ class CustomSegment(Segment):
         segment_info: Mapping,
         create_watcher,
         format: str,
+        mounts: Optional[str] = None,
         mount_ignore_pattern: str = "/snap|/dev|/run|/boot|/sys/fs",
         show_when_used_over_percent: Optional[Mapping[str, float]] = None,
         critical_threshold: Optional[float] = 90,
@@ -103,7 +120,10 @@ class CustomSegment(Segment):
             - {total}       - {used} + {available}
             - {capacity}    - percentage of occupied space, expressed as a float 0..100
             - {mounted_on}  - the mount point, e.g., /mnt/mydata
-          mount_ignore_pattern: A regex pattern to ignore certain mounts, e.g., "/snap".
+          mounts:               If set, only show disks that are mounted on these mount points. Otherwise (default),
+                                start with all (local) mounts and skip the out the ones that match the
+                                'mount_ignore_pattern'.
+          mount_ignore_pattern: A regex pattern to ignore certain mounts, e.g., "/snap". IGNORED if 'mounts' is set.
           show_when_used_over_percent: A dictionary with mount points and the percentage after which to show the
             capacity of that mount point. E.g., {"/": 80} will show the capacity of the root mount point if it is
             at or over 80% full. Missing mount points will always be shown.
@@ -115,13 +135,14 @@ class CustomSegment(Segment):
         del segment_info  # Unused.
         del create_watcher  # Unused.
         if show_when_used_over_percent is None:
-            show_when_used_over_percent = {"/": 80}
+            show_when_used_over_percent = {}
 
         # Cache the stats to avoid calling `df` too often.
         now = datetime.now()
         since_last_call = now - self.last_df_call_time if self.last_df_call_time else None
         if since_last_call is None or since_last_call.total_seconds() > update_rate_s:
-            self.stat_cache = filter_disk_usage(get_disk_usage(), mount_ignore_pattern)
+            df_output = get_df_output()
+            self.stat_cache = filter_disk_usage(get_disk_usage(df_output), mounts, mount_ignore_pattern)
 
         stats = self.stat_cache
         chunks = []
