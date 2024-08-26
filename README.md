@@ -15,7 +15,7 @@ In this case, the relevant part of the powerline config (`cat ~/.config/powerlin
         "segments": {
                 "right": [
                         {
-                                "function": "powerline-diskspace.diskspace.Diskspace",
+                                "function": "powerline_diskspace.diskspace.Diskspace",
                                 "priority": 30,
                                 "args": {
                                         "format": "{mounted_on} @ {capacity:.0f}%",
@@ -36,7 +36,7 @@ In this case, the relevant part of the powerline config (`cat ~/.config/powerlin
 ## Getting Started
 
 System requirements:
- * Linux (macOS may work but isn't tested)
+ * Linux (macOS support is only partial)
  * Python 3.8+
 
 Installation steps:
