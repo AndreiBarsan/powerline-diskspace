@@ -1,7 +1,8 @@
 import pytest
 import mock
 
-from powerline_diskspace.diskspace import get_disk_usage, CustomSegment
+from powerline_diskspace.diskspace import get_disk_usage, DiskspaceSegment
+
 
 @pytest.fixture(name="linux_df_output")
 def _linux_df_output() -> str:
@@ -22,6 +23,7 @@ tmpfs                           tmpfs      65254960          0  65254960   0% /s
 tmpfs                           tmpfs      13050992          0  13050992   0% /run/user/1001
     """.strip()
 
+
 def test_diskspace_nominal(linux_df_output):
     res = get_disk_usage(linux_df_output)
     sample = res[1]
@@ -36,9 +38,12 @@ def test_diskspace_nominal(linux_df_output):
         "mounted_on": "/run",
     }
 
-def test_disk_space_segment(linux_df_output: str):
-    seg = CustomSegment()
-    with mock.patch("powerline_diskspace.diskspace.get_df_output") as mock_get_df_output:
+
+def test_disk_space_segment_nominal(linux_df_output: str):
+    seg = DiskspaceSegment()
+    with mock.patch(
+        "powerline_diskspace.diskspace.get_df_output"
+    ) as mock_get_df_output:
         mock_get_df_output.return_value = linux_df_output
 
         res_v0 = seg(
@@ -55,4 +60,4 @@ def test_disk_space_segment(linux_df_output: str):
         assert res_v0[0]["contents"] == "/run 1.0"
         assert res_v0[0]["highlight_groups"] == ["information:additional"]
 
-        assert res_v0[7]["highlight_groups"] == ["information:additional"]
+        assert res_v0[5]["highlight_groups"] == ["critical:failure"]

@@ -12,7 +12,12 @@ from powerline.theme import requires_segment_info, requires_filesystem_watcher
 @lru_cache(maxsize=1)
 def is_linux() -> bool:
     """Returns True if the current OS is Linux."""
-    return "linux" in subprocess.run(["uname", "-s"], stdout=subprocess.PIPE).stdout.decode("utf-8").lower()
+    return (
+        "linux"
+        in subprocess.run(["uname", "-s"], stdout=subprocess.PIPE)
+        .stdout.decode("utf-8")
+        .lower()
+    )
 
 
 def get_df_output() -> str:
@@ -23,15 +28,17 @@ def get_df_output() -> str:
     # We use 'df' instead of 'os.statvfs' because we want to get ALL disk usages.
     linux_command = [
         "df",
-        "-l", # list only local systems since network ones may be slow
+        "-l",  # list only local systems since network ones may be slow
     ]
     if is_linux():
         linux_command += ["--print-type"]
     else:
         # thanks Tim Apple
         linux_command += ["-Y"]
-        linux_command += ["-k"] # use 1024-byte blocks
-        linux_command += ["-I"] # don't show inodes (they are not shown by default on Linux)
+        linux_command += ["-k"]  # use 1024-byte blocks
+        linux_command += [
+            "-I"
+        ]  # don't show inodes (they are not shown by default on Linux)
 
     result = subprocess.run(linux_command, stdout=subprocess.PIPE)
     return result.stdout.decode("utf-8")
@@ -63,7 +70,9 @@ def get_disk_usage(df_output: str) -> dict:
     return res
 
 
-def filter_disk_usage(disk_usage: dict, mounts: Optional[List[str]], mount_ignore_pattern: str) -> dict:
+def filter_disk_usage(
+    disk_usage: dict, mounts: Optional[List[str]], mount_ignore_pattern: str
+) -> dict:
     """Filter out disk usage based on the mount_ignore_pattern."""
     if mounts is None:
         # Show all, except what's ignored.
@@ -74,14 +83,12 @@ def filter_disk_usage(disk_usage: dict, mounts: Optional[List[str]], mount_ignor
     else:
         # Show only what the user specified.
         mounts_set = set(mounts)
-        return [
-            disk for disk in disk_usage if disk["mounted_on"] in mounts_set
-        ]
+        return [disk for disk in disk_usage if disk["mounted_on"] in mounts_set]
 
 
 @requires_filesystem_watcher
 @requires_segment_info
-class CustomSegment(Segment):
+class DiskspaceSegment(Segment):
     """A segment for displaying the diskspace. See `__call__` for argument docs.
 
     Relies on `df` under the hood, so it should work on most *nix systems. Requires Python 3.8+.
@@ -126,7 +133,7 @@ class CustomSegment(Segment):
           mount_ignore_pattern: A regex pattern to ignore certain mounts, e.g., "/snap". IGNORED if 'mounts' is set.
           show_when_used_over_percent: A dictionary with mount points and the percentage after which to show the
             capacity of that mount point. E.g., {"/": 80} will show the capacity of the root mount point if it is
-            at or over 80% full. Missing mount points will always be shown.
+            at or over 80% full. Mount points not in the dict will always be shown.
           critical_threshold: The threshold at which to consider the disk usage critical (color red).
           update_rate_s: The rate at which to update the disk usage statistics. Note that Powerline may call this
             function more often than this rate, but the disk usage will only be updated at this rate.
@@ -139,10 +146,14 @@ class CustomSegment(Segment):
 
         # Cache the stats to avoid calling `df` too often.
         now = datetime.now()
-        since_last_call = now - self.last_df_call_time if self.last_df_call_time else None
+        since_last_call = (
+            now - self.last_df_call_time if self.last_df_call_time else None
+        )
         if since_last_call is None or since_last_call.total_seconds() > update_rate_s:
             df_output = get_df_output()
-            self.stat_cache = filter_disk_usage(get_disk_usage(df_output), mounts, mount_ignore_pattern)
+            self.stat_cache = filter_disk_usage(
+                get_disk_usage(df_output), mounts, mount_ignore_pattern
+            )
 
         stats = self.stat_cache
         chunks = []
@@ -170,10 +181,12 @@ class CustomSegment(Segment):
         return chunks
 
 
-Diskspace = with_docstring(CustomSegment(), """Return a custom segment.""")
+Diskspace = with_docstring(DiskspaceSegment(), DiskspaceSegment.__doc__)
+
 
 if __name__ == "__main__":
     from pprint import pprint
+
     print("Is Linux?", is_linux())
 
     pprint(filter_disk_usage(get_disk_usage(), "/snap|/dev|/run|/boot|/sys/fs"))
