@@ -64,6 +64,8 @@ There are many ways to customize your output. Please refer to the `__call__` met
 ### Deployment
 
 1. Read [the official guide](https://packaging.python.org/en/latest/tutorials/packaging-projects/#generating-distribution-archives) to refresh your memory, if needed.
-2. `pip install --upgrade build twine`
-3. `python3 -m build`
-4. `python3 -m twine upload  --verbose dist/*`
+2. Ensure you have permissions to publish the package. As of 2025-05, only `AndreiBarsan` has it. Please open an issue or email Andrei if you are interested in becoming a maintainer.
+3. Bump up the version in `pyproject.toml`.
+4. Create a tag for the new version, e.g., `git tag v1.2.3`.
+5. Push the tag to GitHub: `git push origin --tags`.
+6. Create a new release. This should trigger [the deployment workflow](https://github.com/AndreiBarsan/powerline-diskspace/actions/workflows/python-publish.yml) which will build the package and push it to PyPI.
