@@ -1,5 +1,5 @@
 import pytest
-import mock
+from unittest import mock
 
 from powerline_diskspace.diskspace import get_disk_usage, DiskspaceSegment
 

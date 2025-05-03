@@ -1,6 +1,6 @@
 [project]
 name = "powerline-diskspace"
-version = "0.1.2"
+version = "0.1.3"
 authors = [{ name="Andrei Bârsan" }]
 description = "A Powerline segment for displaying local disk utilization."
 license = "MIT"

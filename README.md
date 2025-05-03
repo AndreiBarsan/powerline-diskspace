@@ -52,3 +52,14 @@ If you have any questions or encounter issues setting up, please don't hesitate 
 ## Customization
 
 There are many ways to customize your output. Please refer to the `__call__` method in `diskspace.py`, which is essentially the "main function" of the segment for more documentation.
+
+## Development
+
+### Testing
+
+1. Create a test environment, e.g., with venv or conda.
+2. Ensure `powerline-status` and `pytest` are installed in your test environment.
+3. Run `pytest` inside the `powerline_diskspace` folder.
+
+### Deployment
+
