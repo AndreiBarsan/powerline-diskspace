@@ -63,3 +63,4 @@ There are many ways to customize your output. Please refer to the `__call__` met
 
 ### Deployment
 
+1. Read [the official guide](https://packaging.python.org/en/latest/tutorials/packaging-projects/#generating-distribution-archives) to refresh your memory, if needed.

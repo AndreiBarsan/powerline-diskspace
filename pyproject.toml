@@ -5,7 +5,7 @@ authors = [{ name="Andrei Bârsan" }]
 description = "A Powerline segment for displaying local disk utilization."
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.8"   # Released October 2019
 homepage = "https://github.com/AndreiBarsan/powerline-diskspace"
 classifiers = [
     "Intended Audience :: Developers",
@@ -23,5 +23,5 @@ Homepage = "https://github.com/AndreiBarsan/powerline-diskspace"
 Issues = "https://github.com/AndreiBarsan/powerline-diskspace/issues"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
